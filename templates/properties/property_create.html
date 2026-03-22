@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Add New Property - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900">Add New Property</h1>
+                    <p class="mt-2 text-gray-600">Fill in the details to list your property</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="propertyForm" class="space-y-8">
+                    {% csrf_token %}
+
+                    <!-- Basic Information -->
+                    <div class="bg-gray-50 rounded-2xl p-6 space-y-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Basic Information</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Property Title</label>
+                                {% render_field form.title class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" placeholder="Enter a descriptive title" %}
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
+                                <button type="button" 
+                                        onclick="openPropertyTypeModal()" 
+                                        class="w-full flex justify-between items-center px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200">
+                                    <span id="selectedPropertyType" class="flex items-center">
+                                        <i class="fas fa-home mr-2 text-gray-400"></i>
+                                        <span>Select Property Type</span>
+                                    </span>
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </button>
+                                {% render_field form.property_type class="hidden" %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            {% render_field form.description class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" rows="4" placeholder="Describe your property in detail" %}
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="bg-gray-50 rounded-2xl p-6 space-y-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Location Details</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                                {% render_field form.address class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" rows="3" placeholder="Enter complete address" %}
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                                {% render_field form.city class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" placeholder="Enter city name" %}
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+                                {% render_field form.state class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" placeholder="Enter state name" %}
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
+                                {% render_field form.pincode class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" placeholder="Enter pincode" %}
+                            </div>
+                        </div>
+
+                        <!-- Location Search -->
+                        <!-- <div class="space-y-4">
+                            <div class="relative">
+                                <input type="text" 
+                                       id="locationSearch" 
+                                       placeholder="Search for a location..."
+                                       class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </div> -->
+
+                            <!-- Map Container -->
+                            <div id="map" class="w-full h-96 rounded-xl overflow-hidden"></div>
+
+                            <!-- Coordinates -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                                    {% render_field form.latitude class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" type="number" step="any" placeholder="Enter latitude" id="latitude" %}
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                                    {% render_field form.longitude class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" type="number" step="any" placeholder="Enter longitude" id="longitude" %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="bg-gray-50 rounded-2xl p-6 space-y-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Pricing Details</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Rent (₹)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">₹</span>
+                                    </div>
+                                    {% render_field form.monthly_rent class="w-full pl-8 rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" type="number" min="0" step="100" placeholder="Enter monthly rent" %}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Security Deposit (₹)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">₹</span>
+                                    </div>
+                                    {% render_field form.security_deposit class="w-full pl-8 rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" type="number" min="0" step="100" placeholder="Enter security deposit" %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div class="bg-gray-50 rounded-2xl p-6 space-y-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Amenities</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {% for amenity in amenities %}
+                            <label class="relative flex items-center p-4 rounded-xl border cursor-pointer hover:bg-white transition-colors duration-200">
+                                <input type="checkbox" 
+                                       name="amenities" 
+                                       value="{{ amenity.id }}"
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <span class="ml-3 flex items-center text-gray-900">
+                                    <i class="fas {{ amenity.icon }} mr-2 text-indigo-500"></i>
+                                    {{ amenity.name }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="bg-gray-50 rounded-2xl p-6 space-y-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Availability</h2>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Available From</label>
+                            {% render_field form.available_from class="w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow duration-200" type="date" %}
+                        </div>
+                    </div>
+
+                    <!-- Property Images -->
+                    <div class="bg-gray-50 rounded-2xl p-6 space-y-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Property Images</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="relative">
+                                <input type="file" 
+                                       id="propertyImages" 
+                                       name="images" 
+                                       accept="image/*" 
+                                       multiple 
+                                       class="hidden"
+                                       onchange="handleImageSelection(this)">
+                                <label for="propertyImages" 
+                                       class="block w-full p-4 border-2 border-dashed border-gray-300 rounded-xl text-center cursor-pointer hover:border-indigo-500 transition-colors duration-200">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">Click to upload images or drag and drop</p>
+                                    <p class="text-xs text-gray-500 mt-1">Upload up to 6 images (PNG, JPG)</p>
+                                </label>
+                            </div>
+
+                            <div id="imagePreviewContainer" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <!-- Image previews will be added here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <a href="{% url 'landlord_properties' %}" 
+                           class="px-6 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="px-6 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                            Add Property
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Property Type Modal -->
+<div id="propertyTypeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Select Property Type</h3>
+                <button onclick="closePropertyTypeModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                {% for type in property_types %}
+                <label class="relative flex items-center p-4 rounded-xl border cursor-pointer hover:bg-gray-50 transition-colors duration-200">
+                    <input type="radio" 
+                           name="temp_property_type" 
+                           value="{{ type.id }}" 
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                    <span class="ml-3 flex items-center text-gray-900">
+                        <i class="fas fa-home mr-2 text-indigo-500"></i>
+                        {{ type.name }}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="confirmPropertyType()" 
+                        class="px-4 py-2 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                    Confirm Selection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Integration -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+// Property Type Modal
+function openPropertyTypeModal() {
+    document.getElementById('propertyTypeModal').classList.remove('hidden');
+}
+
+function closePropertyTypeModal() {
+    document.getElementById('propertyTypeModal').classList.add('hidden');
+}
+
+function confirmPropertyType() {
+    const selectedType = document.querySelector('input[name="temp_property_type"]:checked');
+    if (selectedType) {
+        document.getElementById('id_property_type').value = selectedType.value;
+        const typeLabel = selectedType.parentElement.querySelector('span').textContent.trim();
+        document.getElementById('selectedPropertyType').innerHTML = `
+            <i class="fas fa-home mr-2 text-indigo-500"></i>
+            <span>${typeLabel}</span>
+        `;
+    }
+    closePropertyTypeModal();
+}
+
+// Image handling
+function handleImageSelection(input) {
+    const container = document.getElementById('imagePreviewContainer');
+    const files = Array.from(input.files);
+    
+    if (files.length > 6) {
+        alert('You can only upload up to 6 images');
+        input.value = '';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.createElement('div');
+            preview.className = 'relative aspect-square rounded-xl overflow-hidden group';
+            preview.innerHTML = `
+                <img src="${e.target.result}" class="w-full h-full object-cover" alt="Property image">
+                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div class="flex flex-col items-center space-y-2">
+                        <button type="button" onclick="removeImage(this)" class="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-200">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button type="button" onclick="setPrimaryImage(this)" class="p-2 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200 ${index === 0 ? 'primary-image' : ''}">
+                            <i class="fas fa-star"></i>
+                        </button>
+                    </div>
+                </div>
+                ${index === 0 ? '<div class="absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-xs rounded-full">Primary</div>' : ''}
+            `;
+            container.appendChild(preview);
+        }
+        reader.readAsDataURL(file);
+    });
+}
+
+function removeImage(button) {
+    const preview = button.closest('.relative');
+    const container = preview.parentElement;
+    const isPrimary = preview.querySelector('.primary-image');
+    
+    preview.remove();
+    
+    if (isPrimary) {
+        const firstPreview = container.firstElementChild;
+        if (firstPreview) {
+            const primaryButton = firstPreview.querySelector('button:last-child');
+            setPrimaryImage(primaryButton);
+        }
+    }
+    
+    // Reset file input if no images remain
+    if (container.children.length === 0) {
+        document.getElementById('propertyImages').value = '';
+    }
+}
+
+function setPrimaryImage(button) {
+    const allPreviews = document.querySelectorAll('#imagePreviewContainer .relative');
+    
+    allPreviews.forEach(preview => {
+        preview.querySelector('button:last-child').classList.remove('primary-image');
+        const badge = preview.querySelector('.absolute.top-2');
+        if (badge) badge.remove();
+    });
+    
+    const preview = button.closest('.relative');
+    button.classList.add('primary-image');
+    
+    const badge = document.createElement('div');
+    badge.className = 'absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-xs rounded-full';
+    badge.textContent = 'Primary';
+    preview.appendChild(badge);
+}
+
+// Initialize map
+let map;
+let marker;
+const latInput = document.getElementById('latitude');
+const lngInput = document.getElementById('longitude');
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map with default coordinates (India)
+    const lat = latInput.value || 20.5937;
+    const lng = lngInput.value || 78.9629;
+    
+    map = L.map('map').setView([lat, lng], 5);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add geocoder control
+    const geocoder = L.Control.geocoder({
+        defaultMarkGeocode: false
+    }).addTo(map);
+    
+    // Handle geocoding results
+    geocoder.on('markgeocode', function(e) {
+        const latlng = e.geocode.center;
+        updateMarkerAndInputs(latlng);
+        map.setView(latlng, 16);
+    });
+    
+    // Add or update marker on map click
+    map.on('click', function(e) {
+        updateMarkerAndInputs(e.latlng);
+    });
+    
+    // Initialize marker if coordinates exist
+    if (lat && lng) {
+        updateMarkerAndInputs({ lat, lng });
+    }
+    
+    // Handle manual coordinate input
+    latInput.addEventListener('change', updateMapFromInputs);
+    lngInput.addEventListener('change', updateMapFromInputs);
+    
+    // Initialize location search
+    const searchInput = document.getElementById('locationSearch');
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = this.value;
+            geocoder.geocode(query);
+        }
+    });
+});
+
+function updateMarkerAndInputs(latlng) {
+    // Update or create marker
+    if (marker) {
+        marker.setLatLng(latlng);
+    } else {
+        marker = L.marker(latlng, { draggable: true }).addTo(map);
+        marker.on('dragend', function(e) {
+            const position = e.target.getLatLng();
+            updateInputs(position);
+        });
+    }
+    
+    // Update input fields
+    updateInputs(latlng);
+}
+
+function updateInputs(latlng) {
+    latInput.value = latlng.lat.toFixed(6);
+    lngInput.value = latlng.lng.toFixed(6);
+}
+
+function updateMapFromInputs() {
+    const lat = parseFloat(latInput.value);
+    const lng = parseFloat(lngInput.value);
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
+        const latlng = { lat, lng };
+        updateMarkerAndInputs(latlng);
+        map.setView(latlng, map.getZoom());
+    }
+}
+
+// Initialize drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.querySelector('label[for="propertyImages"]');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dropZone.classList.add('border-indigo-500');
+    }
+    
+    function unhighlight(e) {
+        dropZone.classList.remove('border-indigo-500');
+    }
+    
+    dropZone.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        document.getElementById('propertyImages').files = files;
+        handleImageSelection(document.getElementById('propertyImages'));
+    }
+});
+</script>
+{% endblock %}

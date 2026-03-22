@@ -1,0 +1,425 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Home Easeit - Find Your Perfect Rental{% endblock %}</title>
+    <link rel="icon" type="image/png" href="media/logo/icon.png" />
+    <link rel="icon" type="image/png" href="../media/logo/icon.png" />
+    <link rel="icon" type="image/png" href="../../media/logo/icon.png" />
+    <link rel="icon" type="image/png" href="../../../media/logo/icon.png" />
+    <link rel="icon" type="image/png" href="../../../../media/logo/icon.png" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="font-[Inter] bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    {% if user.is_authenticated and user.is_customer %}
+                    <a href="{% url 'home' %}" class="flex items-center">
+                        <i class="fas fa-home text-indigo-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-900">Home <span class="text-[#6366f1]">Easeit</span></span>
+                    </a>
+                    {% elif user.is_authenticated and user.is_landlord %}
+                    <a href="{% url 'landlord_home' %}" class="flex items-center">
+                        <i class="fas fa-home text-indigo-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-900">Home <span class="text-[#6366f1]">LandLord</span></span>
+                    </a>
+                    {% elif user.is_authenticated and user.is_admin %}
+                    <a href="{% url 'admin_home' %}" class="flex items-center">
+                        <i class="fas fa-home text-indigo-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-900">
+                            Home <span class="text-[#6366f1]">Admin</span>
+                        </span>
+                        
+                    </a>
+                    {% else %}
+                    <!-- Default Home Link for Guests -->
+                    <a href="{% url 'home' %}" class="flex items-center">
+                        <i class="fas fa-home text-indigo-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-900">Home Easeit</span>
+                    </a>
+                    {% endif %}
+
+
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        {% if user.is_authenticated and user.is_customer %}
+                        <a href="{% url 'property_list' %}" 
+                           class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'property_list' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                            Find Rentals
+                        </a>
+                        {% endif %}
+                        {% if user.is_authenticated %}
+                            {% if user.is_landlord %}
+                            <a href="{% url 'landlord_properties' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'landlord_properties' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                My Properties
+                            </a>
+                            <a href="{% url 'landlord_bookings' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'landlord_bookings' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                Bookings
+                            </a>
+                            <a href="{% url 'landlord_visits' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'landlord_visits' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                Visit Requests
+                            </a>
+                            {% elif user.is_customer %}
+                            <a href="{% url 'customer_visits' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'customer_visits' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                My Visits
+                            </a>
+                            <a href="{% url 'customer_bookings' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'customer_bookings' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                My Bookings
+                            </a>
+                            {% elif user.is_admin %}
+                            <!-- <a href="{% url 'admin_dashboard' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'admin_dashboard' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                Admin Dashboard
+                            </a> -->
+                            <a href="{% url 'manage_dashboard' %}" 
+                               class="inline-flex items-center px-1 pt-1 text-sm font-medium {% if request.resolver_match.url_name == 'admin_dashboard' %}text-indigo-600 border-b-2 border-indigo-600{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                                Manage
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+                    {% if user.is_authenticated %}
+                    <!-- Notifications -->
+                    <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                        <button @click="open = !open" 
+                                class="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                id="notifications-button">
+                            <i class="fas fa-bell text-xl"></i>
+                            {% with unread_notifications=user.notifications.unread %}
+                            {% if unread_notifications.exists %}
+                            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full"
+                                  id="notifications-count">
+                                {{ unread_notifications.count }}
+                            </span>
+                            {% endif %}
+                            {% endwith %}
+                        </button>
+
+                        <!-- Notifications Dropdown -->
+                        <div x-show="open"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50 max-h-[80vh] overflow-y-auto"
+                             id="notifications-dropdown">
+                            <div class="px-4 py-2 border-b border-gray-200">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                                    <a href="{% url 'notifications' %}" 
+                                       class="text-sm text-indigo-600 hover:text-indigo-900 focus:outline-none">
+                                        View notifications
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="divide-y divide-gray-200" id="notifications-list">
+                                {% for notification in user.notifications.all|slice:":10" %}
+                                <div class="p-4 {% if not notification.is_read %}bg-indigo-50{% endif %} hover:bg-gray-50 transition-colors duration-200" data-notification-id="{{ notification.id }}">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 pt-0.5">
+                                            {% if 'VISIT' in notification.notification_type %}
+                                            <i class="fas fa-calendar text-indigo-500 text-lg"></i>
+                                            {% elif 'BOOKING' in notification.notification_type %}
+                                            <i class="fas fa-home text-green-500 text-lg"></i>
+                                            {% elif 'PAYMENT' in notification.notification_type %}
+                                            <i class="fas fa-money-bill text-yellow-500 text-lg"></i>
+                                            {% elif 'REVIEW' in notification.notification_type %}
+                                            <i class="fas fa-star text-purple-500 text-lg"></i>
+                                            {% else %}
+                                            <i class="fas fa-bell text-gray-500 text-lg"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                            <p class="mt-1 text-sm text-gray-500">{{ notification.message }}</p>
+                                            <div class="mt-2 text-xs text-gray-400 flex justify-between items-center">
+                                                <span>{{ notification.created_at|timesince }} ago</span>
+                                                {% if not notification.is_read %}
+                                                <button onclick="markNotificationRead({{ notification.id }}, this)" 
+                                                        class="text-indigo-600 hover:text-indigo-900 focus:outline-none mark-as-read">
+                                                    Mark as read
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="p-4 text-center text-gray-500">
+                                    No notifications
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" 
+                                @click.away="open = false"
+                                class="flex items-center max-w-xs rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
+                                id="user-menu-button">
+                            {% if user.profile_picture %}
+                            <img class="h-8 w-8 rounded-full" src="{{ user.profile_picture.url }}" alt="">
+                            {% else %}
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span class="text-indigo-600 font-medium">{{ user.username|make_list|first|upper }}</span>
+                            </div>
+                            {% endif %}
+                            <span class="ml-2 text-gray-700">{{ user.username }}</span>
+                            <i class="fas fa-chevron-down ml-2 text-gray-400"></i>
+                        </button>
+
+                        <!-- Dropdown menu -->
+                        <div x-show="open"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5"
+                             role="menu">
+                            <a href="{% url 'profile' %}" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.resolver_match.url_name == 'profile' %}bg-gray-100{% endif %}">
+                                My Profile
+                            </a>
+                            {% if user.is_customer %}
+                            <a href="{% url 'payment_history' %}" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.resolver_match.url_name == 'payment_history' %}bg-gray-100{% endif %}">
+                                Payment History
+                            </a>
+                            {% endif %}
+                            {% if user.is_landlord %}
+                            <a href="{% url 'landlord_transactions' %}" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.resolver_match.url_name == 'landlord_transactions' %}bg-gray-100{% endif %}">
+                                Payment Transactions
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center space-x-4">
+                        <a href="{% url 'login' %}" 
+                           class="text-gray-500 hover:text-gray-900 {% if request.resolver_match.url_name == 'login' %}text-indigo-600{% endif %}">
+                            Login
+                        </a>
+                        <a href="{% url 'register' %}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white {% if request.resolver_match.url_name == 'register' %}bg-indigo-700{% else %}bg-indigo-600 hover:bg-indigo-700{% endif %}">
+                            Sign Up
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    <div class="pt-16"> <!-- Added padding to account for fixed header -->
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div class="rounded-md {% if message.tags == 'success' %}bg-green-50{% elif message.tags == 'error' %}bg-red-50{% else %}bg-blue-50{% endif %} p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle text-green-400"></i>
+                        {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm {% if message.tags == 'success' %}text-green-700{% elif message.tags == 'error' %}text-red-700{% else %}text-blue-700{% endif %}">
+                            {{ message }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="flex-grow">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-white text-lg font-semibold mb-4">Home Easeit</h3>
+                    <p class="text-gray-400">Find your perfect rental property with ease.</p>
+                </div>
+                <div>
+                    <h3 class="text-white text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white {% if request.resolver_match.url_name == 'home' %}text-white{% endif %}">Home</a></li>
+                        <li><a href="{% url 'property_list' %}" class="text-gray-400 hover:text-white {% if request.resolver_match.url_name == 'property_list' %}text-white{% endif %}">Find Rentals</a></li>
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'profile' %}" class="text-gray-400 hover:text-white {% if request.resolver_match.url_name == 'profile' %}text-white{% endif %}">My Profile</a></li>
+                        {% else %}
+                        <li><a href="{% url 'login' %}" class="text-gray-400 hover:text-white {% if request.resolver_match.url_name == 'login' %}text-white{% endif %}">Login</a></li>
+                        <li><a href="{% url 'register' %}" class="text-gray-400 hover:text-white {% if request.resolver_match.url_name == 'register' %}text-white{% endif %}">Register</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white text-lg font-semibold mb-4">Contact Us</h3>
+                    <ul class="space-y-2">
+                        <li class="text-gray-400">
+                            <i class="fas fa-envelope mr-2"></i>
+                            support@homeeaseit.com
+                        </li>
+                        <li class="text-gray-400">
+                            <i class="fas fa-phone mr-2"></i>
+                            +91 1234567890
+                        </li>
+                        <li class="text-gray-400">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            123 Main Street, City, State, 123456
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-800 text-center">
+                <p class="text-gray-400">&copy; 2025 Home Easeit. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Alpine.js -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Notification Updates -->
+    <script>
+    async function markNotificationRead(notificationId, button) {
+        try {
+            const response = await fetch(`/notifications/mark-read/${notificationId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                // Update UI
+                const notification = button.closest('[data-notification-id]');
+                notification.classList.remove('bg-indigo-50');
+                button.remove();
+
+                // Update notification count
+                const count = document.getElementById('notifications-count');
+                if (count) {
+                    const currentCount = parseInt(count.textContent);
+                    if (currentCount > 1) {
+                        count.textContent = currentCount - 1;
+                    } else {
+                        count.remove();
+                    }
+                }
+            } else {
+                throw new Error('Failed to mark notification as read');
+            }
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    }
+
+    function fetchNotifications() {
+        fetch('/notifications/api/unread/')
+            .then(response => response.json())
+            .then(data => {
+                // Update notification count
+                const countElement = document.getElementById('notifications-count');
+                if (data.count > 0) {
+                    if (!countElement) {
+                        const button = document.getElementById('notifications-button');
+                        const span = document.createElement('span');
+                        span.id = 'notifications-count';
+                        span.className = 'absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full';
+                        span.textContent = data.count;
+                        button.appendChild(span);
+                    } else {
+                        countElement.textContent = data.count;
+                    }
+                } else if (countElement) {
+                    countElement.remove();
+                }
+
+                // Update notification list if dropdown is open
+                const dropdown = document.getElementById('notifications-dropdown');
+                if (dropdown && window.getComputedStyle(dropdown).display !== 'none') {
+                    const list = document.getElementById('notifications-list');
+                    list.innerHTML = data.notifications.map(notification => `
+                        <div class="p-4 ${!notification.is_read ? 'bg-indigo-50' : ''} hover:bg-gray-50 transition-colors duration-200" data-notification-id="${notification.id}">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 pt-0.5">
+                                    <i class="fas ${getNotificationIcon(notification.notification_type)} text-lg"></i>
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                                    <p class="mt-1 text-sm text-gray-500">${notification.message}</p>
+                                    <div class="mt-2 text-xs text-gray-400 flex justify-between items-center">
+                                        <span>${notification.created_at} ago</span>
+                                        ${!notification.is_read ? `
+                                        <button onclick="markNotificationRead(${notification.id}, this)" 
+                                                class="text-indigo-600 hover:text-indigo-900 focus:outline-none mark-as-read">
+                                            Mark as read
+                                        </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') || '<div class="p-4 text-center text-gray-500">No notifications</div>';
+                }
+            });
+    }
+
+    function getNotificationIcon(type) {
+        if (type.includes('VISIT')) return 'fa-calendar text-indigo-500';
+        if (type.includes('BOOKING')) return 'fa-home text-green-500';
+        if (type.includes('PAYMENT')) return 'fa-money-bill text-yellow-500';
+        if (type.includes('REVIEW')) return 'fa-star text-purple-500';
+        return 'fa-bell text-gray-500';
+    }
+
+    // Fetch notifications every 30 seconds
+    setInterval(fetchNotifications, 30000);
+
+    // Initial fetch
+    fetchNotifications();
+    </script>
+</body>
+</html>

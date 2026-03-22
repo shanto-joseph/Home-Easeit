@@ -1,0 +1,498 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Find Your Perfect Home - Home Easeit{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Search -->
+<div class="relative bg-gradient-to-br from-indigo-900 to-indigo-700 overflow-hidden">
+    <div class="absolute inset-0">
+        <img src="https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg" alt="Hero background" class="w-full h-full object-cover opacity-20">
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div class="text-center">
+            <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
+                <span class="block">Find Your Dream Home</span>
+                <span class="block text-indigo-200 mt-2">In the Perfect Location</span>
+            </h1>
+            <p class="mt-6 max-w-lg mx-auto text-xl text-indigo-100">
+                Discover thousands of rental properties that match your lifestyle and preferences.
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mt-12 max-w-3xl mx-auto">
+            <form method="get" class="relative">
+                <div class="flex items-center bg-white rounded-full shadow-xl p-2">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ request.GET.search }}"
+                           placeholder="Search by location, property name, or description..."
+                           class="flex-1 px-6 py-4 text-gray-700 focus:outline-none rounded-full">
+                    <button type="submit" 
+                            class="ml-2 px-8 py-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors duration-200 flex items-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="bg-gray-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Filters Section -->
+        <div class="mb-12">
+            <!-- Quick Filters -->
+            <div class="flex flex-wrap gap-4 mb-8">
+                <button type="button" 
+                        onclick="toggleFilters()"
+                        class="inline-flex items-center px-6 py-3 bg-white rounded-full shadow-sm text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                    <i class="fas fa-sliders-h mr-2 text-indigo-500"></i>
+                    All Filters
+                </button>
+                
+                <!-- Property Type Quick Filters -->
+                {% for type in property_types|slice:":4" %}
+                <button type="button"
+                        onclick="quickFilter('property_type', '{{ type.id }}')"
+                        class="inline-flex items-center px-6 py-3 bg-white rounded-full shadow-sm text-base font-medium {% if request.GET.property_type == type.id|stringformat:'i' %}bg-indigo-50 text-indigo-700 border-2 border-indigo-500{% else %}text-gray-700 hover:bg-gray-50{% endif %} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                    <i class="fas fa-home mr-2 {% if request.GET.property_type == type.id|stringformat:'i' %}text-indigo-500{% else %}text-gray-400{% endif %}"></i>
+                    {{ type.name }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <!-- Advanced Filters Panel -->
+            <div id="filtersPanel" class="hidden bg-white rounded-2xl shadow-xl p-8 mb-8 transition-all duration-300">
+                <form method="get" class="space-y-8">
+                    <!-- Property Type -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Property Type</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {% for type in property_types %}
+                            <label class="relative flex items-center p-4 rounded-xl border cursor-pointer hover:bg-indigo-50 transition-colors duration-200 {% if request.GET.property_type == type.id|stringformat:'i' %}bg-indigo-50 border-indigo-500{% endif %}">
+                                <input type="radio" 
+                                       name="property_type" 
+                                       value="{{ type.id }}" 
+                                       {% if request.GET.property_type == type.id|stringformat:"i" %}checked{% endif %}
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                <span class="ml-3 text-gray-900">{{ type.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Price Range</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Rent (₹)</label>
+                                <div class="relative rounded-lg">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">₹</span>
+                                    </div>
+                                    <input type="number" 
+                                           name="min_rent" 
+                                           value="{{ request.GET.min_rent }}"
+                                           class="block w-full pl-8 pr-4 py-3 rounded-lg border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                           placeholder="0">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Rent (₹)</label>
+                                <div class="relative rounded-lg">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">₹</span>
+                                    </div>
+                                    <input type="number" 
+                                           name="max_rent" 
+                                           value="{{ request.GET.max_rent }}"
+                                           class="block w-full pl-8 pr-4 py-3 rounded-lg border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                           placeholder="50000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Location</h3>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            </div>
+                            <input type="text" 
+                                   name="city" 
+                                   value="{{ request.GET.city }}"
+                                   placeholder="Enter city name"
+                                   class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Amenities</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {% for amenity in amenities %}
+                            <label class="relative flex items-center p-4 rounded-xl border cursor-pointer hover:bg-indigo-50 transition-colors duration-200 {% if amenity.id|stringformat:'i' in request.GET.getlist.amenities %}bg-indigo-50 border-indigo-500{% endif %}">
+                                <input type="checkbox" 
+                                       name="amenities" 
+                                       value="{{ amenity.id }}"
+                                       {% if amenity.id|stringformat:"i" in request.GET.getlist.amenities %}checked{% endif %}
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <span class="ml-3 flex items-center text-gray-900">
+                                    <i class="fas {{ amenity.icon }} mr-2 text-indigo-500"></i>
+                                    {{ amenity.name }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <button type="button" 
+                                onclick="clearFilters()"
+                                class="px-6 py-3 border border-gray-200 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                            <i class="fas fa-times mr-2"></i>
+                            Clear All
+                        </button>
+                        <button type="submit" 
+                                class="px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                            <i class="fas fa-check mr-2"></i>
+                            Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section with Recent Views Sidebar -->
+        <div class="relative flex">
+            <!-- Main Property Grid -->
+            <div class="flex-1 pr-[300px]"> <!-- Added right padding to accommodate sidebar -->
+                {% if properties %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {% for property in properties %}
+                    <a href="{% url 'property_detail' property.slug %}" 
+                       class="group bg-white rounded-3xl shadow-lg overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl" 
+                       onclick="addToRecentViews({
+                            id: '{{ property.id }}',
+                            title: '{{ property.title|escapejs }}',
+                            address: '{{ property.address|escapejs }}',
+                            monthlyRent: '{{ property.monthly_rent }}',
+                            slug: '{{ property.slug }}',
+                            image: '{% if property.images.exists %}{{ property.images.first.image.url }}{% endif %}'
+                       }); return true;">
+                        <!-- Property Image -->
+                        <div class="relative aspect-w-16 aspect-h-9 overflow-hidden">
+                            {% with primary_image=property.images.all|dictsort:"is_primary"|last %}
+                            {% if primary_image %}
+                            <img src="{{ primary_image.image.url }}" 
+                                 alt="{{ property.title }}"
+                                 class="w-full h-64 object-cover transform transition-transform duration-500 group-hover:scale-110">
+                            {% elif property.images.exists %}
+                            <img src="{{ property.images.first.image.url }}" 
+                                 alt="{{ property.title }}"
+                                 class="w-full h-64 object-cover transform transition-transform duration-500 group-hover:scale-110">
+                            {% else %}
+                            <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-home text-gray-400 text-4xl"></i>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                            
+                            <!-- Status Badge -->
+                            <div class="absolute top-4 right-4">
+                                <span class="px-4 py-2 rounded-full text-sm font-medium {% if property.is_available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} shadow-md">
+                                    {% if property.is_available %}Available Now{% else %}Not Available{% endif %}
+                                </span>
+                            </div>
+
+                            <!-- Price Badge -->
+                            <div class="absolute bottom-4 left-4">
+                                <span class="px-4 py-2 rounded-full text-sm font-medium bg-white text-indigo-600 shadow-md">
+                                    <i class="fas fa-rupee-sign mr-1"></i>{{ property.monthly_rent }}/mo
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Property Details -->
+                        <div class="p-6">
+                            <div class="mb-4">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ property.title }}</h3>
+                                <p class="text-sm text-gray-500 flex items-center">
+                                    <i class="fas fa-map-marker-alt text-indigo-500 mr-2"></i>
+                                    {{ property.address }}
+                                </p>
+                            </div>
+
+                            <!-- Property Features -->
+                            <div class="space-y-4">
+                                <!-- Type and Amenities -->
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                                        <i class="fas fa-home mr-1"></i>
+                                        {{ property.property_type.name }}
+                                    </span>
+                                    {% for amenity in property.amenities.all|slice:":3" %}
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas {{ amenity.amenity.icon }} mr-1"></i>
+                                        {{ amenity.amenity.name }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Additional Info -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+                                            <i class="fas fa-shield-alt text-indigo-500"></i>
+                                        </div>
+                                        <span>₹{{ property.security_deposit }} deposit</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+                                            <i class="fas fa-calendar-alt text-indigo-500"></i>
+                                        </div>
+                                        <span>From {{ property.available_from|date:"M d" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="mt-12">
+                    <nav class="flex justify-center" aria-label="Pagination">
+                        <ul class="flex items-center space-x-2">
+                            {% if page_obj.has_previous %}
+                            <li>
+                                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                                   class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-indigo-50 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                                    <i class="fas fa-chevron-left mr-2"></i>
+                                    Previous
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            <li>
+                                <span class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                            <li>
+                                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                                   class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-indigo-50 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                                    Next
+                                    <i class="fas fa-chevron-right ml-2"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+                {% else %}
+                <!-- No Results -->
+                <div class="text-center py-16">
+                    <div class="bg-white rounded-2xl shadow-xl p-12 max-w-lg mx-auto">
+                        <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-home text-4xl text-indigo-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">No Properties Found</h3>
+                        <p class="text-gray-500 mb-8">We couldn't find any properties matching your criteria. Try adjusting your filters or search terms.</p>
+                        <button onclick="clearFilters()" 
+                                class="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-md text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-200 hover:-translate-y-1">
+                            <i class="fas fa-redo mr-2"></i>
+                            Clear All Filters
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Views Sidebar -->
+            <div class="fixed top-0 right-0 h-screen w-[300px] bg-white shadow-lg transform transition-transform duration-300 z-40" id="recentViewsSidebar">
+                <!-- Toggle Button -->
+                <button onclick="toggleRecentViews()" 
+                        class="absolute -left-12 top-1/2 -translate-y-1/2 bg-white px-4 py-8 rounded-[15px] shadow-lg text-gray-700 hover:bg-gray-50 focus:outline-none transform rotate-180 border-2 border-r-0 border-indigo-100 hover:border-indigo-200 transition-all duration-200 group">
+                    <span class="flex items-center transform -rotate-180 writing-mode-vertical group-hover:text-indigo-600">
+                        <i class="fas fa-history mr-2 text-indigo-500"></i>
+                        <span class="font-medium">Recent Views</span>
+                        <i id="recentViewsArrow" class="fas fa-chevron-down ml-2 transition-transform duration-200 text-indigo-500"></i>
+                    </span>
+                </button>
+
+                <!-- Recent Views Content -->
+                <div class="h-full overflow-y-auto p-6 pt-20">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recently Viewed</h3>
+                    <div id="recentViewsList" class="space-y-4">
+                        <!-- Recent views will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFilters() {
+    const filtersPanel = document.getElementById('filtersPanel');
+    filtersPanel.classList.toggle('hidden');
+}
+
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+
+function quickFilter(param, value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(param, value);
+    window.location.href = url.toString();
+}
+
+// Smooth scroll animation for pagination
+document.querySelectorAll('a[href^="?page="]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const href = this.getAttribute('href');
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        setTimeout(() => {
+            window.location.href = href;
+        }, 500);
+    });
+});
+
+// Recent Views functionality
+const MAX_RECENT_VIEWS = 10;
+
+function toggleRecentViews() {
+    const sidebar = document.getElementById('recentViewsSidebar');
+    const arrow = document.getElementById('recentViewsArrow');
+    
+    if (sidebar.classList.contains('translate-x-full')) {
+        sidebar.classList.remove('translate-x-full');
+        arrow.classList.remove('rotate-180');
+    } else {
+        sidebar.classList.add('translate-x-full');
+        arrow.classList.add('rotate-180');
+    }
+    
+    // Save state to local storage
+    localStorage.setItem('recentViewsSidebarOpen', !sidebar.classList.contains('translate-x-full'));
+}
+
+function addToRecentViews(property) {
+    const userId = '{{ request.user.id }}';
+    if (!userId) return; // Don't store for anonymous users
+    
+    const storageKey = `recentViews_${userId}`;
+    let recentViews = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    
+    // Remove if already exists
+    recentViews = recentViews.filter(p => p.id !== property.id);
+    
+    // Add to beginning
+    recentViews.unshift(property);
+    
+    // Keep only the last MAX_RECENT_VIEWS items
+    if (recentViews.length > MAX_RECENT_VIEWS) {
+        recentViews = recentViews.slice(0, MAX_RECENT_VIEWS);
+    }
+    
+    localStorage.setItem(storageKey, JSON.stringify(recentViews));
+    updateRecentViewsList();
+}
+
+function updateRecentViewsList() {
+    const userId = '{{ request.user.id }}';
+    if (!userId) {
+        // Handle anonymous users
+        const container = document.getElementById('recentViewsList');
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user text-gray-400 text-xl"></i>
+                </div>
+                <p class="text-gray-500">Please sign in to see your recently viewed properties</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const storageKey = `recentViews_${userId}`;
+    const recentViews = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const container = document.getElementById('recentViewsList');
+    
+    if (recentViews.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-history text-gray-400 text-xl"></i>
+                </div>
+                <p class="text-gray-500">No recently viewed properties</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = recentViews.map(property => `
+        <a href="/properties/customer/${property.slug}/" 
+           class="block bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors duration-200">
+            <div class="flex items-center space-x-4">
+                ${property.image ? `
+                    <img src="${property.image}" 
+                         alt="${property.title}"
+                         class="h-16 w-16 rounded-lg object-cover">
+                ` : `
+                    <div class="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-home text-gray-400"></i>
+                    </div>
+                `}
+                <div>
+                    <h4 class="font-medium text-gray-900 text-sm">${property.title}</h4>
+                    <p class="text-xs text-gray-500">${property.address}</p>
+                    <p class="text-sm font-medium text-indigo-600 mt-1">₹${property.monthlyRent}/mo</p>
+                </div>
+            </div>
+        </a>
+    `).join('');
+}
+
+// Initialize sidebar state on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('recentViewsSidebar');
+    const arrow = document.getElementById('recentViewsArrow');
+    
+    // Check local storage for sidebar state
+    const isSidebarOpen = localStorage.getItem('recentViewsSidebarOpen') === 'true';
+    
+    if (!isSidebarOpen) {
+        sidebar.classList.add('translate-x-full');
+        arrow.classList.add('rotate-180');
+    }
+    
+    updateRecentViewsList();
+});
+</script>
+
+<style>
+.writing-mode-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+</style>
+{% endblock %}

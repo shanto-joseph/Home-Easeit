@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Properties - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen">
+    <!-- Sidebar -->
+    {% include 'admin_panel/includes/sidebar.html' with active_tab='properties' %}
+
+    <!-- Main Content -->
+    <div class="ml-64 p-8">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">Property Management</h1>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-indigo-100">
+                            <i class="fas fa-home text-indigo-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">Total Properties</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ total_properties }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">Available Properties</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ available_properties }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100">
+                            <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">Active Bookings</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ active_bookings }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Property List -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <!-- Search -->
+                        <div class="flex-1 max-w-lg">
+                            <form method="get" class="relative" id="searchForm">
+                                <input type="text" 
+                                       name="search" 
+                                       value="{{ search_query }}"
+                                       placeholder="Search properties..." 
+                                       class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                       onkeyup="handleSearch(this)">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="flex space-x-4">
+                            <select name="type" 
+                                    onchange="applyFilters()"
+                                    class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Types</option>
+                                {% for type in property_types %}
+                                <option value="{{ type.id }}" {% if type_filter == type.id|stringformat:"s" %}selected{% endif %}>{{ type.name }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <select name="availability" 
+                                    onchange="applyFilters()"
+                                    class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Status</option>
+                                <option value="available" {% if availability_filter == 'available' %}selected{% endif %}>Available</option>
+                                <option value="unavailable" {% if availability_filter == 'unavailable' %}selected{% endif %}>Not Available</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Landlord</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for property in properties %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if property.images.exists %}
+                                        <img src="{{ property.images.first.image.url }}" 
+                                             alt="{{ property.title }}"
+                                             class="h-10 w-10 rounded-lg object-cover">
+                                        {% else %}
+                                        <div class="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                                            <i class="fas fa-home text-gray-400"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ property.title }}</div>
+                                            <div class="text-sm text-gray-500">{{ property.address }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                        {{ property.property_type.name }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">₹{{ property.monthly_rent }}/mo</div>
+                                    <div class="text-sm text-gray-500">Deposit: ₹{{ property.security_deposit }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <button onclick="toggleAvailability({{ property.id }}, this)" 
+                                            class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if property.is_available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} cursor-pointer hover:bg-opacity-75">
+                                        {{ property.is_available|yesno:"Available,Not Available" }}
+                                    </button>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if property.landlord.profile_picture %}
+                                        <img src="{{ property.landlord.profile_picture.url }}" 
+                                             alt="{{ property.landlord.get_full_name }}"
+                                             class="h-8 w-8 rounded-full">
+                                        {% else %}
+                                        <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                            <span class="text-indigo-600 font-medium">{{ property.landlord.username|make_list|first|upper }}</span>
+                                        </div>
+                                        {% endif %}
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">{{ property.landlord.get_full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ property.landlord.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <button onclick="viewPropertyDetails({{ property.id }})" 
+                                                class="text-indigo-600 hover:text-indigo-900"
+                                                title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="{% url 'property_edit' property.slug %}" 
+                                           class="text-blue-600 hover:text-blue-900"
+                                           title="Edit Property">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'delete_property' property.id %}" class="inline" onsubmit="return confirmDelete()">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="text-red-600 hover:text-red-900"
+                                                    title="Delete Property">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                    No properties found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="px-6 py-4 bg-white border-t border-gray-200">
+                    <nav class="flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </a>
+                            {% endif %}
+                            {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Showing
+                                    <span class="font-medium">{{ page_obj.start_index }}</span>
+                                    to
+                                    <span class="font-medium">{{ page_obj.end_index }}</span>
+                                    of
+                                    <span class="font-medium">{{ paginator.count }}</span>
+                                    results
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                    {% if page_obj.has_previous %}
+                                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">Previous</span>
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                        {{ i }}
+                                    </span>
+                                    {% else %}
+                                    <a href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ i }}
+                                    </a>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">Next</span>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                    {% endif %}
+                                </nav>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Property Details Modal -->
+<div id="propertyDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Property Details</h3>
+                <button onclick="closePropertyDetails()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="propertyDetailsContent" class="space-y-6">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script>
+let searchTimeout;
+
+function handleSearch(input) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        applyFilters();
+    }, 500);
+}
+
+function applyFilters() {
+    const searchQuery = document.querySelector('input[name="search"]').value;
+    const typeFilter = document.querySelector('select[name="type"]').value;
+    const availabilityFilter = document.querySelector('select[name="availability"]').value;
+    
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (typeFilter) params.set('type', typeFilter);
+    if (availabilityFilter) params.set('availability', availabilityFilter);
+    
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+
+async function toggleAvailability(propertyId, button) {
+    const isCurrentlyAvailable = button.textContent.trim() === 'Available';
+    
+    try {
+        const response = await fetch(`/admin-panel/manage/properties/toggle-availability/${propertyId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                is_available: !isCurrentlyAvailable
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update button appearance
+            button.textContent = data.is_available ? 'Available' : 'Not Available';
+            button.classList.toggle('bg-green-100');
+            button.classList.toggle('text-green-800');
+            button.classList.toggle('bg-red-100');
+            button.classList.toggle('text-red-800');
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to update property availability');
+    }
+}
+
+async function viewPropertyDetails(propertyId) {
+    const modal = document.getElementById('propertyDetailsModal');
+    const content = document.getElementById('propertyDetailsContent');
+    modal.classList.remove('hidden');
+    
+    content.innerHTML = '<div class="flex justify-center"><i class="fas fa-spinner fa-spin text-indigo-600 text-3xl"></i></div>';
+    
+    try {
+        const response = await fetch(`/admin-panel/manage/properties/details/${propertyId}/`);
+        const data = await response.json();
+        
+        content.innerHTML = `
+            <div class="space-y-6">
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <h4 class="font-medium text-gray-900">Property Information</h4>
+                    <div class="mt-2 space-y-2">
+                        <p class="text-sm text-gray-600"><span class="font-medium">Title:</span> ${data.title}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Type:</span> ${data.property_type}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Address:</span> ${data.address}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">City:</span> ${data.city}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Monthly Rent:</span> ₹${data.monthly_rent}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Security Deposit:</span> ₹${data.security_deposit}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Status:</span> ${data.is_available ? 'Available' : 'Not Available'}</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <h4 class="font-medium text-gray-900">Landlord Information</h4>
+                    <div class="mt-2 space-y-2">
+                        <p class="text-sm text-gray-600"><span class="font-medium">Name:</span> ${data.landlord_name}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Email:</span> ${data.landlord_email}</p>
+                        
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <h4 class="font-medium text-gray-900">Statistics</h4>
+                    <div class="mt-2 grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600"><span class="font-medium">Total Visits:</span> ${data.visits_count}</p>
+                            <p class="text-sm text-gray-600"><span class="font-medium">Total Bookings:</span> ${data.bookings_count}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600"><span class="font-medium">Reviews:</span> ${data.reviews_count}</p>
+                            <p class="text-sm text-gray-600"><span class="font-medium">Average Rating:</span> ${data.average_rating} / 5</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        content.innerHTML = '<p class="text-red-600 text-center">Error loading property details</p>';
+    }
+}
+
+function closePropertyDetails() {
+    document.getElementById('propertyDetailsModal').classList.add('hidden');
+}
+
+function confirmDelete() {
+    return confirm('Are you sure you want to delete this property? This action cannot be undone.');
+}
+</script>
+{% endblock %}

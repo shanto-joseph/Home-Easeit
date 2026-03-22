@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Update Profile - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900">Update Your Profile</h2>
+                    <p class="mt-2 text-gray-600">Keep your information up to date</p>
+                </div>
+
+                {% if messages %}
+                {% for message in messages %}
+                <div class="mb-6 rounded-lg p-4 {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            {% if message.tags == 'success' %}
+                            <i class="fas fa-check-circle text-green-400"></i>
+                            {% elif message.tags == 'error' %}
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                            {% else %}
+                            <i class="fas fa-info-circle text-blue-400"></i>
+                            {% endif %}
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm">{{ message }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                First Name
+                            </label>
+                            <div class="mt-1">
+                                {% render_field form.first_name class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Last Name
+                            </label>
+                            <div class="mt-1">
+                                {% render_field form.last_name class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Email Address
+                        </label>
+                        <div class="mt-1">
+                            <input type="email" value="{{ user.email }}" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-50 text-gray-500" readonly>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">Email address cannot be changed</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Phone Number
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.phone_number class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.profile_picture.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Profile Picture
+                        </label>
+                        <div class="mt-1">
+                            <div class="flex flex-col items-center space-y-4">
+                                {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="Current Profile Picture" class="h-32 w-32 rounded-full object-cover ring-4 ring-indigo-50" id="profile-preview">
+                                {% else %}
+                                <div class="h-32 w-32 rounded-full bg-indigo-100 flex items-center justify-center ring-4 ring-indigo-50" id="profile-placeholder">
+                                    <span class="text-4xl font-bold text-indigo-600">{{ user.username|make_list|first|upper }}</span>
+                                </div>
+                                <img src="" alt="Profile Preview" class="h-32 w-32 rounded-full object-cover ring-4 ring-indigo-50 hidden" id="profile-preview">
+                                {% endif %}
+                                <div class="w-full max-w-md">
+                                    {% render_field form.profile_picture class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" onchange="previewImage(this);" %}
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500 text-center">
+                                Recommended: Square image, at least 400x400 pixels
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-4 pt-6">
+                        <a href="{% url 'profile' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="fas fa-save mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('profile-preview');
+    const placeholder = document.getElementById('profile-placeholder');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            if (placeholder) {
+                placeholder.classList.add('hidden');
+            }
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

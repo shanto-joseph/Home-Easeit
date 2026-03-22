@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Property Visits - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Property Visit Requests</h1>
+
+        {% if visits %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="divide-y divide-gray-200">
+                {% for visit in visits %}
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">{{ visit.property.title }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ visit.property.address }}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            {% if visit.status != 'REQUESTED' %}
+                            <select onchange="updateVisitStatus(this, {{ visit.id }})" 
+                                    class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="APPROVED" {% if visit.status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                                <option value="COMPLETED" {% if visit.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                                <option value="CANCELLED" {% if visit.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                            {% endif %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                {% if visit.status == 'REQUESTED' %}bg-yellow-100 text-yellow-800
+                                {% elif visit.status == 'APPROVED' %}bg-green-100 text-green-800
+                                {% elif visit.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                                {% elif visit.status == 'CANCELLED' %}bg-red-100 text-red-800
+                                {% elif visit.status == 'RESCHEDULED' %}bg-purple-100 text-purple-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ visit.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-user mr-2"></i>
+                                <span>{{ visit.customer.get_full_name }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500 mt-2">
+                                <i class="fas fa-phone mr-2"></i>
+                                <span>{{ visit.customer.phone_number }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-calendar mr-2"></i>
+                                <span>{{ visit.visit_date|date:"F j, Y" }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500 mt-2">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>{{ visit.visit_time|time:"g:i A" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if visit.status == 'REQUESTED' %}
+                    <div class="mt-6 space-y-4">
+                        <div class="flex space-x-4">
+                            <form method="post" action="{% url 'approve_visit' visit.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <i class="fas fa-check mr-2"></i>
+                                    Approve Visit
+                                </button>
+                            </form>
+                            <button onclick="showActionModal('reject', {{ visit.id }})" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <i class="fas fa-times mr-2"></i>
+                                Reject Visit
+                            </button>
+                            <button onclick="showActionModal('reschedule', {{ visit.id }})" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                Reschedule Visit
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if visit.reason %}
+                    <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-900">
+                            {% if visit.status == 'RESCHEDULED' %}
+                            Rescheduling Reason:
+                            {% else %}
+                            Rejection Reason:
+                            {% endif %}
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-500">{{ visit.reason }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if visit.feedback %}
+                    <div class="mt-4">
+                        <h4 class="text-sm font-medium text-gray-900">Visitor Feedback:</h4>
+                        <p class="mt-1 text-sm text-gray-500">{{ visit.feedback }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 bg-white rounded-lg shadow">
+            <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
+            <p class="text-gray-500 text-lg">No visit requests found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Action Modal -->
+<div id="actionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900" id="modalTitle"></h3>
+                <button onclick="hideActionModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="actionForm" method="post" class="space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label for="reason" class="block text-sm font-medium text-gray-700">Reason</label>
+                    <textarea id="reason" 
+                              name="reason" 
+                              rows="4" 
+                              class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              placeholder="Please provide a reason..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" 
+                            onclick="hideActionModal()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Confirm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showActionModal(action, visitId) {
+    const modal = document.getElementById('actionModal');
+    const form = document.getElementById('actionForm');
+    const title = document.getElementById('modalTitle');
+    
+    let actionUrl = '';
+    switch(action) {
+        case 'reject':
+            title.textContent = 'Reject Visit';
+            actionUrl = `/visits/reject/${visitId}/`;
+            break;
+        case 'reschedule':
+            title.textContent = 'Reschedule Visit';
+            actionUrl = `/visits/reschedule/${visitId}/`;
+            break;
+    }
+    
+    form.action = actionUrl;
+    modal.classList.remove('hidden');
+}
+
+function hideActionModal() {
+    document.getElementById('actionModal').classList.add('hidden');
+}
+
+function updateVisitStatus(select, visitId) {
+    const status = select.value;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/visits/update-status/${visitId}/`;
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const statusInput = document.createElement('input');
+    statusInput.type = 'hidden';
+    statusInput.name = 'status';
+    statusInput.value = status;
+    
+    form.appendChild(csrfInput);
+    form.appendChild(statusInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

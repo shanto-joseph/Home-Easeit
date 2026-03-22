@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Payment - {{ property.title }} - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900">Complete Your Booking</h1>
+                    <p class="mt-2 text-gray-600">{{ property.title }}</p>
+                </div>
+
+                <!-- Property Preview -->
+                <div class="mb-8 bg-gray-50 rounded-xl p-6">
+                    <div class="flex items-center space-x-4">
+                        {% if property.images.exists %}
+                        <img src="{{ property.images.first.image.url }}" 
+                             alt="{{ property.title }}"
+                             class="h-24 w-24 rounded-lg object-cover">
+                        {% else %}
+                        <div class="h-24 w-24 rounded-lg bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-home text-gray-400 text-2xl"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">{{ property.title }}</h3>
+                            <p class="text-sm text-gray-500">{{ property.address }}</p>
+                            <!-- <div class="mt-2 flex flex-col space-y-1">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-calendar mr-2"></i>
+                                    Move-in Date: {{ booking_data.start_date|date:"F j, Y" }}
+                                </div>
+                                {% if booking_data.end_date %}
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-calendar-check mr-2"></i>
+                                    End Date: {{ booking_data.end_date|date:"F j, Y" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+
+                <!-- Payment Summary -->
+                <div class="mb-8 bg-blue-50 rounded-xl p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Summary</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">First Month's Rent</span>
+                            <span class="font-medium">₹{{ booking_data.monthly_rent }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Security Deposit</span>
+                            <span class="font-medium">₹{{ booking_data.security_deposit }}</span>
+                        </div>
+                        {% if visit_fee %}
+                        <div class="flex justify-between text-sm text-green-600">
+                            <span>Visit Fee Adjustment</span>
+                            <span class="font-medium">-₹{{ visit_fee }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="pt-3 border-t border-blue-200">
+                            <div class="flex justify-between text-lg font-medium">
+                                <span>Total Amount</span>
+                                <span class="text-indigo-600">₹{{ total_amount }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <form method="post" class="space-y-6" id="paymentForm">
+                    {% csrf_token %}
+                    
+                    <!-- Payment Method Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-4">Select Payment Method</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            {% for method, label in form.payment_method.field.choices %}
+                            <label class="relative flex items-center p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors duration-200 {% if forloop.first %}border-indigo-600 bg-indigo-50{% else %}border-gray-200{% endif %}">
+                                <input type="radio" 
+                                       name="payment_method" 
+                                       value="{{ method }}"
+                                       {% if forloop.first %}checked{% endif %}
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                       onchange="updatePaymentMethod(this.value)">
+                                <span class="ml-3 flex items-center">
+                                    {% if method == 'CREDIT_CARD' %}
+                                    <i class="fas fa-credit-card text-indigo-500 mr-2"></i>
+                                    {% elif method == 'DEBIT_CARD' %}
+                                    <i class="fas fa-credit-card text-green-500 mr-2"></i>
+                                    {% elif method == 'UPI' %}
+                                    <i class="fas fa-mobile-alt text-blue-500 mr-2"></i>
+                                    {% elif method == 'NETBANKING' %}
+                                    <i class="fas fa-university text-purple-500 mr-2"></i>
+                                    {% elif method == 'PAYPAL' %}
+                                    <i class="fab fa-paypal text-blue-500 mr-2"></i>
+                                    {% endif %}
+                                    {{ label }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-sm font-medium text-gray-900 mb-4">Terms and Conditions</h3>
+                        <div class="space-y-4 text-sm text-gray-700">
+                            <p>By proceeding with this payment, you agree to:</p>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li>Pay the first month's rent and security deposit upfront</li>
+                                <li>Comply with all property rules and regulations</li>
+                                <li>Maintain the property in good condition</li>
+                                <li>Provide notice before vacating the property</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <a href="{% url 'property_detail' property.slug %}" 
+                           class="px-6 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                            Cancel
+                        </a>
+                        <button type="button" 
+                                onclick="showPaymentModal()"
+                                class="px-6 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                            Pay ₹{{ total_amount }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Enter Payment Details</h3>
+                <button onclick="hidePaymentModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Card Payment Form -->
+            <div id="cardPaymentForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Card Number</label>
+                    <input type="text" 
+                           id="cardNumber" 
+                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="1234 5678 9012 3456"
+                           maxlength="16"
+                           required>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Expiry Date</label>
+                        <input type="text" 
+                               id="expiryDate" 
+                               class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="MM/YY"
+                               maxlength="5"
+                               required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">CVV</label>
+                        <input type="password" 
+                               id="cvv" 
+                               class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="123"
+                               maxlength="3"
+                               required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Card Holder Name</label>
+                    <input type="text" 
+                           id="cardHolderName" 
+                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Enter name as on card"
+                           required>
+                </div>
+            </div>
+
+            <!-- UPI Payment Form -->
+            <div id="upiPaymentForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">UPI ID</label>
+                    <input type="text" 
+                           id="upiId" 
+                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="username@upi"
+                           required>
+                </div>
+            </div>
+
+            <!-- PayPal Form -->
+            <div id="paypalForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">PayPal Email</label>
+                    <input type="email" 
+                           id="paypalEmail" 
+                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Enter your PayPal email"
+                           required>
+                </div>
+            </div>
+
+            <!-- Net Banking Form -->
+            <div id="netBankingForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Select Bank</label>
+                    <select id="bankSelect" 
+                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select your bank</option>
+                        <option value="sbi">State Bank of India</option>
+                        <option value="hdfc">HDFC Bank</option>
+                        <option value="icici">ICICI Bank</option>
+                        <option value="axis">Axis Bank</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-4">
+                <button onclick="hidePaymentModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="processPayment()" 
+                        class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    Pay ₹{{ total_amount }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPaymentMethod = 'CREDIT_CARD';
+
+function updatePaymentMethod(method) {
+    currentPaymentMethod = method;
+    
+    // Update radio button styles
+    document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+        const label = input.closest('label');
+        if (input.value === method) {
+            label.classList.add('border-indigo-600', 'bg-indigo-50');
+            label.classList.remove('border-gray-200');
+        } else {
+            label.classList.remove('border-indigo-600', 'bg-indigo-50');
+            label.classList.add('border-gray-200');
+        }
+    });
+}
+
+function showPaymentModal() {
+    const modal = document.getElementById('paymentModal');
+    const cardForm = document.getElementById('cardPaymentForm');
+    const upiForm = document.getElementById('upiPaymentForm');
+    const paypalForm = document.getElementById('paypalForm');
+    const netBankingForm = document.getElementById('netBankingForm');
+    
+    // Hide all forms first
+    cardForm.classList.add('hidden');
+    upiForm.classList.add('hidden');
+    paypalForm.classList.add('hidden');
+    netBankingForm.classList.add('hidden');
+    
+    // Show relevant form based on payment method
+    switch(currentPaymentMethod) {
+        case 'CREDIT_CARD':
+        case 'DEBIT_CARD':
+            cardForm.classList.remove('hidden');
+            break;
+        case 'UPI':
+            upiForm.classList.remove('hidden');
+            break;
+        case 'PAYPAL':
+            paypalForm.classList.remove('hidden');
+            break;
+        case 'NETBANKING':
+            netBankingForm.classList.remove('hidden');
+            break;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function hidePaymentModal() {
+    document.getElementById('paymentModal').classList.add('hidden');
+}
+
+function processPayment() {
+    let isValid = true;
+    
+    switch(currentPaymentMethod) {
+        case 'CREDIT_CARD':
+        case 'DEBIT_CARD':
+            isValid = validateCardPayment();
+            break;
+        case 'UPI':
+            isValid = validateUpiPayment();
+            break;
+        case 'PAYPAL':
+            isValid = validatePayPalPayment();
+            break;
+        case 'NETBANKING':
+            isValid = validateNetBankingPayment();
+            break;
+    }
+    
+    if (isValid) {
+        document.getElementById('paymentForm').submit();
+    }
+}
+
+function validateCardPayment() {
+    const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+    const expiryDate = document.getElementById('expiryDate').value;
+    const cvv = document.getElementById('cvv').value;
+    const cardHolderName = document.getElementById('cardHolderName').value;
+    
+    if (!/^\d{16}$/.test(cardNumber)) {
+        alert('Please enter a valid 16-digit card number');
+        return false;
+    }
+    
+    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+        alert('Please enter a valid expiry date (MM/YY)');
+        return false;
+    }
+    
+    // Validate expiry date
+    const [month, year] = expiryDate.split('/');
+    const expiry = new Date(2000 + parseInt(year), parseInt(month) - 1);
+    const now = new Date();
+    
+    if (expiry < now) {
+        alert('Card has expired');
+        return false;
+    }
+    
+    if (!/^\d{3}$/.test(cvv)) {
+        alert('Please enter a valid 3-digit CVV');
+        return false;
+    }
+    
+    if (!cardHolderName.trim()) {
+        alert('Please enter the card holder name');
+        return false;
+    }
+    
+    return true;
+}
+
+function validateUpiPayment() {
+    const upiId = document.getElementById('upiId').value;
+    if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/.test(upiId)) {
+        alert('Please enter a valid UPI ID');
+        return false;
+    }
+    return true;
+}
+
+function validatePayPalPayment() {
+    const email = document.getElementById('paypalEmail').value;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Please enter a valid PayPal email address');
+        return false;
+    }
+    return true;
+}
+
+function validateNetBankingPayment() {
+    const bank = document.getElementById('bankSelect').value;
+    if (!bank) {
+        alert('Please select a bank');
+        return false;
+    }
+    return true;
+}
+
+// Card input formatting
+document.getElementById('cardNumber')?.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    e.target.value = value;
+});
+
+document.getElementById('expiryDate')?.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2, 4);
+    }
+    e.target.value = value;
+});
+
+document.getElementById('cvv')?.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    e.target.value = value;
+});
+</script>
+{% endblock %}

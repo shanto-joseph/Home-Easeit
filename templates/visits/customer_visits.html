@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}My Visits - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">My Property Visits</h1>
+
+        {% if visits %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="divide-y divide-gray-200">
+                {% for visit in visits %}
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">{{ visit.property.title }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ visit.property.address }}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium
+                            {% if visit.status == 'REQUESTED' %}bg-yellow-100 text-yellow-800
+                            {% elif visit.status == 'APPROVED' %}bg-green-100 text-green-800
+                            {% elif visit.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                            {% elif visit.status == 'CANCELLED' %}bg-red-100 text-red-800
+                            {% elif visit.status == 'RESCHEDULED' %}bg-purple-100 text-purple-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ visit.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-calendar mr-2"></i>
+                                <span>{{ visit.visit_date|date:"F j, Y" }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500 mt-2">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>{{ visit.visit_time|time:"g:i A" }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-rupee-sign mr-2"></i>
+                                <span>Visit Fee: ₹{{ visit.visit_fee }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <span>{{ visit.fee_paid|yesno:"Fee Paid,Fee Pending" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if visit.status == 'RESCHEDULED' %}
+                    <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-900">Rescheduling Reason:</h4>
+                        <p class="mt-1 text-sm text-gray-500">{{ visit.reason }}</p>
+                        
+                        <div class="mt-4">
+                            <button onclick="showRescheduleModal({{ visit.id }})" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                Select New Time
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if visit.status == 'COMPLETED' %}
+                    <div class="mt-6 flex space-x-4">
+                        {% if visit.booking %}
+                        <div class="inline-flex items-center px-4 py-2 bg-green-100 rounded-md text-sm font-medium text-green-700">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Property Booked
+                        </div>
+                        {% elif visit.fee_refunded %}
+                        <div class="inline-flex items-center px-4 py-2 bg-gray-100 rounded-md text-sm font-medium text-gray-700">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Visit Fee Refunded
+                        </div>
+                        {% else %}
+                        <form method="post" action="{% url 'visit_refund' visit.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <i class="fas fa-times mr-2"></i>
+                                Not Interested (Refund)
+                            </button>
+                        </form>
+                        {% if visit.property.is_available %}
+                        <a href="{% url 'create_booking' visit.property.slug %}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <i class="fas fa-check mr-2"></i>
+                            Book Now
+                        </a>
+                        {% else %}
+                        <div class="inline-flex items-center px-4 py-2 bg-red-100 rounded-md text-sm font-medium text-red-700">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            Property Not Available
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 bg-white rounded-lg shadow">
+            <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
+            <p class="text-gray-500 text-lg">No visits scheduled yet.</p>
+            <a href="{% url 'property_list' %}" 
+               class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <i class="fas fa-search mr-2"></i>
+                Browse Properties
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div id="rescheduleModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Select New Visit Time</h3>
+                <button onclick="hideRescheduleModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="rescheduleForm" method="post" class="space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">New Date</label>
+                    <input type="date" 
+                           name="visit_date" 
+                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">New Time</label>
+                    <input type="time" 
+                           name="visit_time" 
+                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           required>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" 
+                            onclick="hideRescheduleModal()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Confirm New Time
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showRescheduleModal(visitId) {
+    const modal = document.getElementById('rescheduleModal');
+    const form = document.getElementById('rescheduleForm');
+    form.action = `/visits/confirm-reschedule/${visitId}/`;
+    
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateInput = form.querySelector('input[type="date"]');
+    dateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    // Set maximum date to 30 days from now
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    dateInput.max = maxDate.toISOString().split('T')[0];
+    
+    modal.classList.remove('hidden');
+}
+
+function hideRescheduleModal() {
+    document.getElementById('rescheduleModal').classList.add('hidden');
+}
+</script>
+{% endblock %}

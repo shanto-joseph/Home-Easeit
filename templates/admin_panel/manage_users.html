@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen">
+    <!-- Sidebar -->
+    {% include 'admin_panel/includes/sidebar.html' with active_tab='users' %}
+
+    <!-- Main Content -->
+    <div class="ml-64 p-8">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">User Management</h1>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-indigo-100">
+                            <i class="fas fa-users text-indigo-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">Total Users</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ total_users }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100">
+                            <i class="fas fa-user-check text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">Active Users</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ active_users }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100">
+                            <i class="fas fa-user-times text-red-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">Inactive Users</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ inactive_users }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100">
+                            <i class="fas fa-user-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">New Users (30d)</p>
+                            <p class="text-2xl font-semibold text-gray-900">{{ new_users_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User List -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <!-- Search -->
+                        <div class="flex-1 max-w-lg">
+                            <form method="get" class="relative">
+                                <input type="text" 
+                                       name="search" 
+                                       value="{{ search_query }}"
+                                       placeholder="Search users..." 
+                                       class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="flex space-x-4">
+                            <select name="role" 
+                                    onchange="applyFilters()"
+                                    class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Roles</option>
+                                <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Admin</option>
+                                <option value="LANDLORD" {% if role_filter == 'LANDLORD' %}selected{% endif %}>Landlord</option>
+                                <option value="CUSTOMER" {% if role_filter == 'CUSTOMER' %}selected{% endif %}>Customer</option>
+                            </select>
+
+                            <select name="status" 
+                                    onchange="applyFilters()"
+                                    class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Status</option>
+                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in users %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" 
+                                             alt="{{ user.get_full_name }}"
+                                             class="h-10 w-10 rounded-full">
+                                        {% else %}
+                                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                            <span class="text-indigo-600 font-medium">{{ user.username|make_list|first|upper }}</span>
+                                        </div>
+                                        {% endif %}
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ user.get_full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if user.is_admin %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                        ADMIN
+                                    </span>
+                                    {% else %}
+                                    <select onchange="updateUserRole({{ user.id }}, this)"
+                                            class="text-sm rounded-full px-2 py-1 border-0 {% if user.role.name == 'LANDLORD' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %} focus:ring-2 focus:ring-indigo-500">
+                                        <option value="LANDLORD" {% if user.role.name == 'LANDLORD' %}selected{% endif %}>LANDLORD</option>
+                                        <option value="CUSTOMER" {% if user.role.name == 'CUSTOMER' %}selected{% endif %}>CUSTOMER</option>
+                                    </select>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if user.is_admin %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <button onclick="toggleUserStatus({{ user.id }})"
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} cursor-pointer hover:bg-opacity-75">
+                                        {{ user.is_active|yesno:"Active,Inactive" }}
+                                    </button>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.date_joined|date:"M d, Y" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <button onclick="viewUserDetails({{ user.id }})" 
+                                                class="text-indigo-600 hover:text-indigo-900">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if not user.is_admin %}
+                                        <button onclick="deleteUser({{ user.id }})" 
+                                                class="text-red-600 hover:text-red-900">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="userDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">User Details</h3>
+                <button onclick="closeUserDetails()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="userDetailsContent" class="space-y-6">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-auto p-6">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Delete User</h3>
+                <p class="text-sm text-gray-500">Are you sure you want to delete this user? This action cannot be undone.</p>
+            </div>
+            <div class="mt-6 flex justify-end space-x-4">
+                <button onclick="closeDeleteModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <form id="deleteUserForm" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                        Delete User
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyFilters() {
+    const roleSelect = document.querySelector('select[name="role"]');
+    const statusSelect = document.querySelector('select[name="status"]');
+    const searchInput = document.querySelector('input[name="search"]');
+    
+    const params = new URLSearchParams(window.location.search);
+    
+    if (roleSelect.value) params.set('role', roleSelect.value);
+    else params.delete('role');
+    
+    if (statusSelect.value) params.set('status', statusSelect.value);
+    else params.delete('status');
+    
+    if (searchInput.value) params.set('search', searchInput.value);
+    else params.delete('search');
+    
+    window.location.search = params.toString();
+}
+
+async function toggleUserStatus(userId) {
+    try {
+        const response = await fetch(`/admin-panel/users/toggle-status/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update UI
+            const button = event.target.closest('button');
+            button.classList.toggle('bg-green-100');
+            button.classList.toggle('text-green-800');
+            button.classList.toggle('bg-red-100');
+            button.classList.toggle('text-red-800');
+            button.textContent = data.is_active ? 'Active' : 'Inactive';
+            
+            // Show success message
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to update user status');
+    }
+}
+
+async function updateUserRole(userId, selectElement) {
+    const previousValue = selectElement.getAttribute('data-previous-value');
+    const newRole = selectElement.value;
+    
+    try {
+        const response = await fetch(`/admin-panel/users/update-role/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `role=${newRole}`
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update UI colors
+            selectElement.className = `text-sm rounded-full px-2 py-1 border-0 ${
+                newRole === 'LANDLORD' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+            } focus:ring-2 focus:ring-indigo-500`;
+            
+            // Show success message
+            alert(data.message);
+            
+            // Store new value as previous
+            selectElement.setAttribute('data-previous-value', newRole);
+        } else {
+            alert(data.message);
+            // Reset select to previous value
+            selectElement.value = previousValue;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to update user role');
+        // Reset select to previous value
+        selectElement.value = previousValue;
+    }
+}
+
+// Store previous value before change
+document.querySelectorAll('select[onchange^="updateUserRole"]').forEach(select => {
+    select.setAttribute('data-previous-value', select.value);
+});
+
+function deleteUser(userId) {
+    const modal = document.getElementById('deleteModal');
+    const form = document.getElementById('deleteUserForm');
+    form.action = `/admin-panel/users/delete/${userId}/`;
+    modal.classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+function viewUserDetails(userId) {
+    const modal = document.getElementById('userDetailsModal');
+    const content = document.getElementById('userDetailsContent');
+    modal.classList.remove('hidden');
+    
+    // Load user details
+    content.innerHTML = '<div class="flex justify-center"><i class="fas fa-spinner fa-spin text-indigo-600 text-3xl"></i></div>';
+    
+    // Fetch and display user details - FIXED URL PATH HERE
+    fetch(`/admin-panel/users/details/${userId}/`)
+        .then(response => response.json())
+        .then(data => {
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center">
+                        ${data.profile_picture ? `
+                            <img src="${data.profile_picture}" 
+                                 alt="${data.full_name}"
+                                 class="h-16 w-16 rounded-full">
+                        ` : `
+                            <div class="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span class="text-2xl font-medium text-indigo-600">${data.username[0].toUpperCase()}</span>
+                            </div>
+                        `}
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium text-gray-900">${data.full_name}</h4>
+                            <p class="text-sm text-gray-500">${data.email}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-medium text-gray-900">Contact</h4>
+                            <p class="mt-1 text-sm text-gray-500">${data.phone_number}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Member Since</h4>
+                            <p class="mt-1 text-sm text-gray-500">${data.date_joined}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Activity Summary</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-500">Properties: ${data.properties_count}</p>
+                                <p class="text-gray-500">Bookings: ${data.bookings_count}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Visits: ${data.visits_count}</p>
+                                <p class="text-gray-500">Reviews: ${data.reviews_count}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            content.innerHTML = '<p class="text-red-600">Error loading user details</p>';
+            console.error('Error:', error);
+        });
+}
+
+function closeUserDetails() {
+    document.getElementById('userDetailsModal').classList.add('hidden');
+}
+</script>
+{% endblock %}

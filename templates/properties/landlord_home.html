@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Landlord Dashboard - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Welcome Section -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+            <div class="relative">
+                <div class="h-48 bg-gradient-to-r from-indigo-900 to-blue-900">
+                    <div class="absolute inset-0 bg-black opacity-50"></div>
+                    <div class="relative h-full flex items-center px-8">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white">Welcome, {{ request.user.get_full_name }}</h1>
+                            <p class="mt-2 text-indigo-100">Manage your rental properties and bookings</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-indigo-100">
+                        <i class="fas fa-home text-indigo-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Total Properties</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ total_properties }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Active Bookings</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ active_bookings }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i class="fas fa-calendar text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Pending Visits</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ pending_visits }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i class="fas fa-rupee-sign text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Total Revenue</p>
+                        <p class="text-2xl font-semibold text-gray-900">₹{{ total_revenue }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <a href="{% url 'property_create' %}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-indigo-100">
+                        <i class="fas fa-plus text-indigo-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-gray-900">Add New Property</h3>
+                        <p class="text-sm text-gray-500">List a new rental property</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'landlord_visits' %}" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i class="fas fa-calendar-check text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-gray-900">Manage Visits</h3>
+                        <p class="text-sm text-gray-500">Handle property visit requests</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Recent Bookings -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Bookings</h2>
+                <div class="space-y-4">
+                    {% for booking in recent_bookings %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 rounded-full {% if booking.status == 'PENDING' %}bg-yellow-500{% elif booking.status == 'APPROVED' %}bg-green-500{% else %}bg-gray-500{% endif %} mr-4"></div>
+                            <div>
+                                <p class="text-sm text-gray-900">{{ booking.property.title }}</p>
+                                <p class="text-xs text-gray-500">{{ booking.created_at|timesince }} ago</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {% if booking.status == 'PENDING' %}bg-yellow-100 text-yellow-800{% elif booking.status == 'APPROVED' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Reviews -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Reviews</h2>
+                <div class="space-y-4">
+                    {% for review in recent_reviews %}
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            {% if review.reviewer.profile_picture %}
+                            <img src="{{ review.reviewer.profile_picture.url }}" alt="{{ review.reviewer.get_full_name }}" class="h-8 w-8 rounded-full">
+                            {% else %}
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span class="text-indigo-600 font-medium">{{ review.reviewer.username|make_list|first|upper }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-900">{{ review.property.title }}</p>
+                            <div class="flex items-center mt-1">
+                                <div class="flex text-yellow-400">
+                                    {% for i in "12345"|make_list %}
+                                    <i class="fas fa-star {% if forloop.counter <= review.rating %}text-yellow-400{% else %}text-gray-300{% endif %} text-xs"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="ml-2 text-xs text-gray-500">{{ review.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Register as Customer - Home Easeit{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your customer account
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+            Or
+            <a href="{% url 'register_landlord' %}" class="font-medium text-indigo-600 hover:text-indigo-500">
+                register as a landlord
+            </a>
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {% if form.errors %}
+            <div class="rounded-md bg-red-50 p-4 mb-4" id="toast-message">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            Please correct the following errors:
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <div class="-mx-1.5 -my-1.5">
+                            <button type="button" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100" onclick="document.getElementById('toast-message').style.display = 'none'">
+                                <span class="sr-only">Dismiss</span>
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-6" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            First name
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.first_name class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your first name" %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Last name
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.last_name class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your last name" %}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Username
+                    </label>
+                    <div class="mt-1">
+                        {% render_field form.username class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Choose a username" %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Email address
+                    </label>
+                    <div class="mt-1">
+                        {% render_field form.email class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your email" type="email" %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Phone number
+                    </label>
+                    <div class="mt-1">
+                        {% render_field form.phone_number class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your phone number" %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.profile_picture.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Profile Picture (Optional)
+                    </label>
+                    <div class="mt-1 flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center" id="preview-placeholder">
+                                <i class="fas fa-user text-gray-400 text-3xl"></i>
+                            </div>
+                            <img src="" alt="Profile Preview" class="h-24 w-24 rounded-full object-cover hidden" id="preview-image">
+                        </div>
+                        <div class="flex-grow">
+                            {% render_field form.profile_picture class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" onchange="previewImage(this);" %}
+                            <p class="mt-1 text-sm text-gray-500">Upload a profile picture (optional)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div class="mt-1">
+                        {% render_field form.password1 class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Create a password (minimum 6 characters)" %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Confirm password
+                    </label>
+                    <div class="mt-1">
+                        {% render_field form.password2 class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Confirm your password" %}
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create account
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">
+                            Already have an account?
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <a href="{% url 'login' %}" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100">
+                        Sign in
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('preview-image');
+    const placeholder = document.getElementById('preview-placeholder');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+    }
+}
+
+// Auto-hide toast message after 5 seconds
+setTimeout(function() {
+    const toast = document.getElementById('toast-message');
+    if (toast) {
+        toast.style.display = 'none';
+    }
+}, 5000);
+</script>
+{% endblock %}
