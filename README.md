@@ -94,8 +94,8 @@ home_easeit/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/home-easeit.git
-cd home-easeit
+git clone https://github.com/shanto-joseph/Home-Easeit.git
+cd Home-Easeit
 ```
 
 ### 2. Create a virtual environment
